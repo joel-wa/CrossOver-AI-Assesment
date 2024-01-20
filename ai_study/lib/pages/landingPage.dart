@@ -23,7 +23,7 @@ class _LandingPageState extends State<LandingPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Your AI study Assistant"),
+        title: const Text("Your AI study Assistant -v1"),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
