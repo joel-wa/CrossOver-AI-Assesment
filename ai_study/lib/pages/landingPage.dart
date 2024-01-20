@@ -12,6 +12,12 @@ class _LandingPageState extends State<LandingPage> {
   String selectedStandard = '4th Grade Common Core Writing Standard';
   TextEditingController interestController =
       TextEditingController(text: 'Baseball');
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    SimClass().reset();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +69,6 @@ class _LandingPageState extends State<LandingPage> {
               const SizedBox(height: 40),
               ElevatedButton(
                 onPressed: () {
-                  SimClass().reset();
                   NavClass().changePage('Question Page', context);
                 },
                 child: const Text("Begin"),

@@ -19,15 +19,8 @@ class SimClass {
   final StreamController<double> timerStreamController =
       StreamController<double>();
   static double currentTime = 0;
-  late Timer _timer;
 
 //////////Method to check elapsed time
-  runTime() {
-    final StreamSink<double> timerStreamSink = timerStreamController.sink;
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      timerStreamSink.add(currentTime);
-    });
-  }
 
 ////////////Functions
   Future<QuestionClass> generateQuestion() async {
@@ -55,7 +48,6 @@ class SimClass {
   }
 
   void reset() {
-    _timer.cancel();
     currentTime = 0;
     user = UserClass(
         'random user', '4th Grade Common Core Writing standard', 'baseball');
