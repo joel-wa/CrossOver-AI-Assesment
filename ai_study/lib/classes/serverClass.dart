@@ -1,11 +1,15 @@
 import 'package:ai_study/aLocal/LocalServer.dart';
 import 'package:ai_study/classes/questionClass.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ServerClass {
   LocalServer localServer = LocalServer();
+  FirebaseFirestore cloud = FirebaseFirestore.instance;
+
   final url = 'http://ec2-3-145-176-115.us-east-2.compute.amazonaws.com:5000/';
   final test = '''
 {
@@ -124,5 +128,13 @@ class ServerClass {
         await _createPost(question, ans, rightAns, "evaluateAnswer");
 
     return response;
+  }
+
+  ///////////Firebase Implementation
+  ///
+  newServerGetQuestion(String questionStandard, String interest) async {
+    CollectionReference questionCollection = cloud.collection("Questions");
+    DocumentReference questionDoc =
+        await questionCollection.add({"$questionStandard:$interest"});
   }
 }
