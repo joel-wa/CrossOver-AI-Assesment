@@ -22,20 +22,13 @@ class _QuestionWrapperState extends State<QuestionWrapper> {
             builder: ((context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 // While data is still loading
-                return Center(child: CircularProgressIndicator());
+                return const CircularProgressIndicator();
               } else if (snapshot.hasError) {
                 // If there's an error in fetching data
                 return Text('Error: ${snapshot.error}');
               } else {
                 return QuestionCardWidget(question: snapshot.data!);
               }
-            }))
-        // PageView.builder(
-        //   itemCount: questionList.length,
-        //   itemBuilder: (BuildContext context, index) {
-        //     return QuestionCardWidget(question: questionList[index]);
-        //   },
-        // ),
-        );
+            })));
   }
 }

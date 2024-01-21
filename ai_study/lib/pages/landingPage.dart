@@ -16,7 +16,7 @@ class _LandingPageState extends State<LandingPage> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    SimClass().reset();
+    // SimClass().reset();
   }
 
   @override
