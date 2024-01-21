@@ -65,6 +65,9 @@ class ServerClass {
   }
 
   Map<String, dynamic> _convertStringToMap(String jsonString) {
+    jsonString = jsonString.replaceAll("'", "\"");
+    // print("New string is: $jsonString...");
+    print(jsonString);
     Map<String, dynamic> resultMap = json.decode(jsonString);
     print(resultMap);
     return resultMap;
@@ -91,6 +94,7 @@ class ServerClass {
   }
 
   QuestionClass _convertMapToQuestion(Map questionMap) {
+    print(questionMap);
     List<String> pa = _convertStringToList(questionMap['possibleAnswers']);
     QuestionClass q = QuestionClass(
       '',
@@ -107,11 +111,11 @@ class ServerClass {
 
   Future<QuestionClass> getServerQuestion(
       String questionStandard, String interest) async {
-    String userPrompt = "standard: $questionStandard, my interests:$interest";
+    // String userPrompt = "standard: $questionStandard, my interests:$interest";
     // late QuestionClass questions;
 
-    // final results = ;
-    final results = await _newPost(userPrompt, 'getQuestion');
+    final results = await newServerGetQuestion(questionStandard, interest);
+    // final results = await _newPost(userPrompt, 'getQuestion');
     print(results);
     final r = _convertMapToQuestion(_convertStringToMap(results));
     QuestionClass question = r;
@@ -132,9 +136,21 @@ class ServerClass {
 
   ///////////Firebase Implementation
   ///
-  newServerGetQuestion(String questionStandard, String interest) async {
+  Future<String> newServerGetQuestion(
+      String questionStandard, String interest) async {
+    String r = "";
     CollectionReference questionCollection = cloud.collection("Questions");
-    DocumentReference questionDoc =
-        await questionCollection.add({"$questionStandard:$interest"});
+    DocumentReference questionDoc = await questionCollection
+        .add({"questionDoc": "$questionStandard:$interest"});
+    await Future.delayed(const Duration(seconds: 3));
+
+    var val = await questionDoc.get();
+    if (val.exists) {
+      Map<String, dynamic> data = val.data() as Map<String, dynamic>;
+
+      // Extract values from the "questionDoc" field
+      r = data["Question"];
+    }
+    return r;
   }
 }
