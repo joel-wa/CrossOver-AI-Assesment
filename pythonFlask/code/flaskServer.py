@@ -11,6 +11,7 @@ import os
 
 
 openai.api_key = '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'
+openai.api_key = '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'
 os.environ["REPLICATE_API_TOKEN"] = "r8_WYxUzEqqzbgVUgaPcBI1XIIOBcuGseA1wakWQ" 
 
 
