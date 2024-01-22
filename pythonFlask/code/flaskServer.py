@@ -25,6 +25,9 @@ def parseAIResponse(response_message):
         if function_name == 'questionGenerator':
             value = function_args
             return value
+        if function_name == 'evalAnswer':
+            value = function_args
+            return value
     else:
         message = response_message['content']
         return message
@@ -32,25 +35,48 @@ def parseAIResponse(response_message):
 
 
 def requestQuestion(userPrompt):
-    functions = [{'name': 'questionGenerator', 'description': 'function to generate an objective question given a question standard and a topic of interest of the user, where the user must choose one of your provided answers.', 'parameters': {'type': 'object', 'properties': {'intro': {'type': 'string', 'description': 'a quick introduction and context of the topic of the question being asked.'}, 'question': {'type': 'string', 'description': 'the actual question the user must answer.'}, 'possibleAnswers': {'type': 'string', 'description': 'a list of the possible answers the user must choose from separated by a comma and encapsulated in []eg. [answer A,answer B, answer C, answer D].'}, 'answer': {'type': 'string', 'description': 'the index of the right answer in the possible answers list'}, 'explanation': {'type': 'string', 'description': 'an explanation of why the right answer should be the right answer. It should be clear and comprehensive.'}}}}]
+    functions = [{'name': 'questionGenerator', 'description': 'function to generate an objective question given a question standard and a topic of interest of the user, where the user must choose one of your provided answers.', 'parameters': {'type': 'object', 'properties': {'intro': {'type': 'string', 'description': 'a quick introduction and context of the topic of the question being asked.'}, 'question': {'type': 'string', 'description': 'the actual question the user must answer.'}, }}}]
 
     response = openai.ChatCompletion.create(
     model="gpt-3.5-turbo-0613",
-    messages = [{"role":"system","content":"You are a questions generator, give only 4 possible answers with exactly one valid answer among them."},{"role": "user", "content": userPrompt}],
+    messages = [{"role":"system","content":"You are to generate an FRQ type question to test a student's understanding of their interest"},{"role": "user", "content": userPrompt}],
     functions=functions,
     function_call="auto",  # auto is default, but we'll be explicit
     )
     response_message = parseAIResponse(response["choices"][0]["message"])
-    q = evaluateQuestion(response_message)
+    # q = evaluateQuestion(response_message)
+    q = (response_message)
     print(q)
     return q
 
 
-def evalAnswer(question,userAns,correctAns):
-    system_prompt = f"You are an AI teacher talking to your student directly. You asked your student this {question}, but they chose {userAns} instead of {correctAns}. Explain to the student why they are wrong and how they can improve."
+def evalAnswer(question,userAns):
+    functions = [{
+  "name": "evalAnswer",
+  "description": "function to evaluate the answer given by a student to a question.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "feedback": {
+        "type": "string",
+        "description": "a detailed and concise feedback and explanation of why the given answer is right or wrong, how to get the answer next time, and how the student can improve."
+      },
+      "goodAnswer": {
+        "type": "string",
+        "description": "if the answer was right then True else the value is False",
+        "enum": ["True", "False"]
+      }
+    },
+    "required": ["feedback", "goodAnswer"]
+  }
+}]
+
+    system_prompt = f"You are an AI teacher talking to your student directly. You asked your student this {question}, and they chose {userAns} .Explain to the student if they are right or wrong and why they are."
     response = openai.ChatCompletion.create(
     model="gpt-3.5-turbo-0613",
     messages = [{"role":"system","content":system_prompt}],
+    functions=functions,
+    function_call={"name": "evalAnswer"},  # auto is default, but we'll be explicit
     )
     response_message = parseAIResponse(response["choices"][0]["message"])
     print(response)
@@ -83,15 +109,14 @@ def getQuestion(data):
     # response_data = {"body": output, "status": 201}
     return output,201
 
-@app.route('/evaluateAnswer', methods=['POST'])
-def evaluateAnswer():
-    data = request.get_json()
-    print(data)
-    question = data.get('question', '')
-    userAns = data.get('userAns', '')
-    correctAns = data.get('correctAns', '')
+@app.route('/evaluateAnswer/<question>/<answer>', methods=['POST','GET'])
+def evaluateAnswer(question,answer):
+    # data = request.get_json()
+    # print(data)
+    # question = data.get('question', '')
+    # userAns = data.get('userAns', '')
 
-    output = evalAnswer(question, userAns, correctAns)
+    output = evalAnswer(question, answer)
     print(output)
     return output, 201
 
