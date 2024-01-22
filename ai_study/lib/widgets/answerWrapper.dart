@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 class AnswerWrapper extends StatefulWidget {
   QuestionClass q;
-  int userAns;
+  String userAns;
   AnswerWrapper({super.key, required this.q, required this.userAns});
 
   @override
@@ -13,7 +13,7 @@ class AnswerWrapper extends StatefulWidget {
 
 class _AnswerWrapperState extends State<AnswerWrapper> {
   QuestionClass q;
-  int userAns;
+  String userAns;
 
   _AnswerWrapperState(this.q, this.userAns);
   @override

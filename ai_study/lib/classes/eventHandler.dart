@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 
 class EventHandler {
-  static int selectedAnswer = -1;
   static String questionStandard = '';
   static String userInterest = 'Baseball';
   NavClass nav = NavClass();
@@ -25,30 +24,29 @@ class EventHandler {
   }
 
 //////////////Question Events
-  onUserSelectAnswer(int answer) {
-    selectedAnswer = answer;
-  }
+  // onUserSelectAnswer(int answer) {
+  //   selectedAnswer = answer;
+  // }
 
-  onAnswerSubmitted(QuestionClass q, BuildContext context) async {
+  onAnswerSubmitted(
+      QuestionClass q, BuildContext context, String userAnswer) async {
     // Use this as the selected answer selectedAnswer
-    if (selectedAnswer == -1) {
-      return;
-    }
-    print(selectedAnswer);
-    int tempAns = selectedAnswer;
-    final response = await SimClass().submitAnswer(q, selectedAnswer);
-    print(selectedAnswer);
+
+    print(userAnswer);
+    // int tempAns = selectedAnswer;
+    final response = await SimClass().submitAnswer(q, userAnswer);
+    // print(selectedAnswer);
     q.answerExplanation = response;
     //Navigate to Answer page
     if (context.mounted) {
       Navigator.of(context)
           .push(MaterialPageRoute(builder: (BuildContext context) {
-        return AnswerWrapper(q: q, userAns: tempAns);
+        return AnswerWrapper(q: q, userAns: userAnswer);
       }));
     }
 
     //then reset to -1
-    selectedAnswer = -1;
+    // selectedAnswer = -1;
   }
 
   onProceed(BuildContext context) {

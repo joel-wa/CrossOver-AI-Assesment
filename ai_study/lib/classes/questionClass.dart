@@ -5,7 +5,8 @@ class QuestionClass {
   List<String> possibleAnswers;
   int answer;
   String answerExplanation;
+  String qid;
 
   QuestionClass(this.generalContext, this.passage, this.question,
-      this.possibleAnswers, this.answer, this.answerExplanation);
+      this.possibleAnswers, this.answer, this.answerExplanation, this.qid);
 }

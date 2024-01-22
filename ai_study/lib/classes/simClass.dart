@@ -32,19 +32,17 @@ class SimClass {
     return q;
   }
 
-  submitAnswer(QuestionClass q, int selectedAnswer) async {
-    if (selectedAnswer != q.answer) {
-      //Tell AI user answered question wrongly
-      final response = await server.userAnweredWrongly(q.question,
-          q.possibleAnswers[selectedAnswer], q.possibleAnswers[q.answer]);
+  submitAnswer(QuestionClass q, String userAnswer) async {
+    print('waiting for reply');
+    final response =
+        await server.serverEvaluateAnswer(q.question, userAnswer, q.qid);
 
-      user.answerWrongly();
-      return response;
-    } else {
+    if (response["goodAnswer"] == "True") {
       user.answerCorrectly();
-      //Ask AI for next question
-      return q.answerExplanation;
+    } else {
+      user.answerWrongly();
     }
+    return response["feedback"];
   }
 
   void reset() {

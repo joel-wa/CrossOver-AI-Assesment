@@ -39,20 +39,19 @@ class ServerClass {
     }
   }
 
-  Future _createPost(
-      String question, String userAns, String correctAns, String ending) async {
-    final Map<String, String> postData = {
-      'question': question,
-      'userAns': userAns,
-      'correctAns': correctAns,
-    };
+  Future _createPost(String question, String userAns, String ending) async {
+    // final Map<String, String> postData = {
+    //   'question': question,
+    //   'userAns': userAns,
+    // };
 
     final response = await http.post(
-      Uri.parse('${url}$ending'), // Replace with your actual API endpoint
+      Uri.parse(
+          '$url$ending/$question/$userAns'), // Replace with your actual API endpoint
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
-      body: jsonEncode(postData),
+      // body: jsonEncode(postData),
     );
 
     if (response.statusCode == 201) {
@@ -64,23 +63,43 @@ class ServerClass {
     }
   }
 
+  String modifyJsonString(String jsonString) {
+    // Find the possibleAnswers array in the JSON string
+    RegExp exp = RegExp(r'"possibleAnswers": \[.*?\],');
+    RegExpMatch? match = exp.firstMatch(jsonString);
+
+    String possibleAnswersStr = match!.group(0)!;
+    print(possibleAnswersStr);
+    // possibleAnswersStr = possibleAnswersStr.replaceAll("[", replace)
+    jsonString = jsonString.replaceAll(possibleAnswersStr, "");
+
+    return jsonString;
+  }
+
   Map<String, dynamic> _convertStringToMap(String jsonString) {
     jsonString = jsonString.replaceAll("'", "\"");
-    // print("New string is: $jsonString...");
+    jsonString = modifyJsonString(jsonString);
     print(jsonString);
+    // jsonString = escapeDoubleQuotesInField(jsonString, 'explanation');
+
+    // print("New string is: \n  $jsonString");
+    // print(jsonString);
     Map<String, dynamic> resultMap = json.decode(jsonString);
-    print(resultMap);
+    // print(resultMap["intro"]);
     return resultMap;
   }
 
   List<String> _convertStringToList(List inputString) {
     // Remove square brackets and split the string into a list
-    List<String> values = [];
-    // inputString.toString().replaceAll('[', '').replaceAll(']', '').split(', ');
+    List<String> values = inputString
+        .toString()
+        .replaceAll('[', '')
+        .replaceAll(']', '')
+        .split(', ');
 
-    for (var element in inputString) {
-      values.add(element.toString());
-    }
+    // for (var element in inputString) {
+    //   values.add(element.toString());
+    // }
 
     print("Possible answers are:");
     print(values[1]);
@@ -93,17 +112,17 @@ class ServerClass {
     return val;
   }
 
-  QuestionClass _convertMapToQuestion(Map questionMap) {
-    print(questionMap);
-    List<String> pa = _convertStringToList(questionMap['possibleAnswers']);
+  QuestionClass _convertMapToQuestion(Map questionMap, String id) {
+    // print(questionMap);
     QuestionClass q = QuestionClass(
       '',
-      // questionMap['passage'],
       questionMap['intro'],
       questionMap['question'],
-      pa,
-      getAnswerIndex(questionMap['answer'], pa),
-      questionMap['explanation'],
+      [],
+      0,
+      "questionMap['explanation']",
+      id,
+      // questionMap["id"],
     );
 
     return q;
@@ -116,41 +135,95 @@ class ServerClass {
 
     final results = await newServerGetQuestion(questionStandard, interest);
     // final results = await _newPost(userPrompt, 'getQuestion');
-    print(results);
-    final r = _convertMapToQuestion(_convertStringToMap(results));
+    // print(results);
+    final r = _convertMapToQuestion(results["r"], results["id"]);
     QuestionClass question = r;
 
     return question;
   }
 
-  Future<String> userAnweredWrongly(
-      String question, String ans, String rightAns) async {
-    String prompt = '$question/$ans/$rightAns';
+  serverEvaluateAnswer(String question, String ans, String id) async {
+    String prompt = '$question/$ans';
     print('prompt is');
     print(prompt);
-    String response =
-        await _createPost(question, ans, rightAns, "evaluateAnswer");
-
-    return response;
+    print("Question id is: ${id}");
+    final response = await getAiReply(question, ans, id);
+    print(response);
+    final reply = response;
+    return reply;
   }
 
   ///////////Firebase Implementation
   ///
-  Future<String> newServerGetQuestion(
+  Future<Map> newServerGetQuestion(
       String questionStandard, String interest) async {
-    String r = "";
+    String id = "43I3AFrQfGQETuV3VxHp";
+    late var r;
     CollectionReference questionCollection = cloud.collection("Questions");
     DocumentReference questionDoc = await questionCollection
         .add({"questionDoc": "$questionStandard:$interest"});
-    await Future.delayed(const Duration(seconds: 3));
 
-    var val = await questionDoc.get();
-    if (val.exists) {
-      Map<String, dynamic> data = val.data() as Map<String, dynamic>;
+    while (true) {
+      await Future.delayed(const Duration(seconds: 1));
 
-      // Extract values from the "questionDoc" field
-      r = data["Question"];
+      var val = await questionDoc.get();
+      if (val.exists) {
+        Map<String, dynamic> data = val.data() as Map<String, dynamic>;
+
+        // Extract values from the "questionDoc" field
+        r = data["Question"];
+        id = val.id;
+
+        if (r != null) {
+          // Break the loop when the "Question" field is valid
+          break;
+        }
+      }
     }
+    // r = {
+    //   "intro":
+    //       "In a baseball game, there are two teams - the home team and the visiting team. Each team takes turns playing offense and defense. The team on offense tries to score runs, while the team on defense tries to prevent the other team from scoring. Here's a question to test your understanding of baseball:",
+    //   "question":
+    //       "What is the term for the team that is currently on offense in a baseball game?",
+    //   "possibleAnswers":
+    //       "[A] Home team, [B] Visiting team, [C] Both teams, [D] Neither team",
+    //   "answer": "A",
+    //   "explanation":
+    //       "The term for the team that is currently on offense in a baseball game is the home team. The visiting team is on defense."
+    // };
+    return {"r": r, "id": id};
+  }
+
+  Future<Map> getAiReply(
+    String question,
+    String answer,
+    String id,
+  ) async {
+    late var r;
+    CollectionReference questionCollection = cloud.collection("Questions");
+    DocumentReference questionDoc = questionCollection.doc(id);
+    print("ID is $id");
+    await questionCollection
+        .doc(id)
+        .update({"studentResponse": "$question:$answer"});
+
+    while (true) {
+      await Future.delayed(const Duration(seconds: 1));
+
+      var val = await questionDoc.get();
+      if (val.exists) {
+        Map<String, dynamic> data = val.data() as Map<String, dynamic>;
+
+        // Extract values from the "studentResponse" field
+        r = data["Evaluation"];
+
+        if (r != null) {
+          // Break the loop when the "Evaluation" field is valid
+          break;
+        }
+      }
+    }
+
     return r;
   }
 }

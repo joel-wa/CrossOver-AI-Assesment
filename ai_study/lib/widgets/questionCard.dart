@@ -16,8 +16,9 @@ class _QuestionCardWidgetState extends State<QuestionCardWidget> {
   QuestionClass q;
   _QuestionCardWidgetState(this.q);
 
-  int selectedAnswer = -1;
+  String userAnswer = '';
   bool isloading = false;
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -36,30 +37,20 @@ class _QuestionCardWidgetState extends State<QuestionCardWidget> {
             const SizedBox(height: 20),
             Text(q.question),
             const SizedBox(height: 20),
-            Container(
-                child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: q.possibleAnswers.length,
-                    itemBuilder: (BuildContext context, index) {
-                      return Container(
-                        margin: const EdgeInsets.all(5),
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            width: 2,
-                          ),
-                        ),
-                        child: CheckboxListTile(
-                            title: Text(q.possibleAnswers[index]),
-                            value: (index == selectedAnswer) ? true : false,
-                            onChanged: (value) {
-                              setState(() {
-                                selectedAnswer = index;
-                                EventHandler()
-                                    .onUserSelectAnswer(selectedAnswer);
-                              });
-                            }),
-                      );
-                    })),
+
+            // Replace the previous list of possible answers with a TextField
+            TextField(
+              onChanged: (value) {
+                setState(() {
+                  userAnswer = value;
+                });
+              },
+              decoration: InputDecoration(
+                labelText: 'Type your answer here',
+                border: OutlineInputBorder(),
+              ),
+            ),
+
             const SizedBox(
               height: 20,
             ),
@@ -69,11 +60,12 @@ class _QuestionCardWidgetState extends State<QuestionCardWidget> {
                       setState(() {
                         isloading = true;
                       });
-                      EventHandler().onAnswerSubmitted(q, context);
+                      userAnswer = userAnswer.replaceAll("?", "");
+                      EventHandler().onAnswerSubmitted(q, context, userAnswer);
                     },
                     child: const Text('Submit'),
                   )
-                : CircularProgressIndicator(),
+                : const CircularProgressIndicator(),
           ],
         ));
   }
